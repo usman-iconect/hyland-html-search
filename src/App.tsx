@@ -30,54 +30,64 @@ function App() {
       return;
     };
 
-    //on click handler
-    const debouncedHandleClick = debounce(onHighlightClicked, 10);
-    function onHighlightClicked(e: any){
-      console.log('Clicked on', e.target.getAttribute("data-custom"));
-    }
-
     // Remove existing highlights
     const existingHighlights = iframeDoc.querySelectorAll('.highlight');
     existingHighlights.forEach((highlight) => {
-        const text = highlight.textContent;
-        if (text) {
-          const textNode = document.createTextNode(text);
-          highlight.parentNode?.replaceChild(textNode, highlight);
-        }
+      const text = highlight.textContent;
+      if (text) {
+        const textNode = document.createTextNode(text);
+        highlight.parentNode?.replaceChild(textNode, highlight);
+      }
     });
 
     //hyland puts everything in a div
     const elements = iframeDoc.getElementsByTagName('div');
 
     console.log("Starting Search ", new Date().toLocaleTimeString())
-
+    let count = 0;
+    
     for (let i = 0; i < elements.length; i++) {
       const divElement = elements[i];
       const textNodes = getTextNodes(divElement);
+      // eslint-disable-next-line no-loop-func
       textNodes.forEach((textNode) => {
         const text = textNode.nodeValue || '';
         const re = new RegExp(searchTerm, 'gi');
         let match;
         while ((match = re.exec(text)) !== null) {
-          const span = iframeDoc.createElement('span');
-          const id = Math.random().toString();
-          span.className = 'highlight';
-          span.id = id;
-          span.style.backgroundColor = 'yellow';
-          span.setAttribute('data-custom', JSON.stringify({ id, text: match[0] }));
-          span.onclick = debouncedHandleClick
-          const range = iframeDoc.createRange();
-          range.setStart(textNode, match.index);
-          range.setEnd(textNode, match.index + match[0].length);
-          range.surroundContents(span);
+          if (match.index > 0) {
+            //create highlight span
+            const span = iframeDoc.createElement('span');
+            const id = Math.random().toString();
+            span.className = 'highlight';
+            span.id = id;
+            span.style.backgroundColor = 'yellow';
+            span.setAttribute('data-custom', JSON.stringify({ id, text: match[0] }));
+            span.onclick = (e : any) => {
+              console.log('Clicked on', e.target.getAttribute("data-custom"))
+            }
+
+            //insert that on the text node
+            try {
+              const range = iframeDoc.createRange();
+              range.setStart(textNode, match.index);
+              range.setEnd(textNode, match.index + match[0].length);
+              range.surroundContents(span);
+              count++;
+            }
+            catch (error) {
+              // console.log(error);
+            }
+          }
         }
       });
     }
 
     console.log("Ending Search ", new Date().toLocaleTimeString())
+    console.log("Highlighted ", count)
   }
 
-  
+
 
   return (
     <div className="App">
@@ -107,17 +117,5 @@ const getTextNodes = (element: Node): Text[] => {
 
   return textNodes;
 };
-
-function debounce<T extends (...args: any[]) => any>(func: T, delay: number) {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  return function(this: ThisParameterType<T>, ...args: Parameters<T>) {
-      const context = this;
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-          func.apply(context, args);
-      }, delay);
-  };
-}
-
 
 export default App;
