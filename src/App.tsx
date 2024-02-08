@@ -14,7 +14,7 @@ function App() {
   function onSearch() {
 
     const searchInput = document.getElementById('input-text') as HTMLInputElement;
-    const searchTerm = searchInput.value;
+    const searchTerm = searchInput.value.trim();
     if (!searchTerm) {
       return;
     };
@@ -45,7 +45,7 @@ function App() {
 
     console.log("Starting Search ", new Date().toLocaleTimeString())
     let count = 0;
-    
+
     for (let i = 0; i < elements.length; i++) {
       const divElement = elements[i];
       const textNodes = getTextNodes(divElement);
@@ -56,12 +56,16 @@ function App() {
         let match;
         while ((match = re.exec(text)) !== null) {
           if (match.index > 0) {
-            //create highlight span
+
+            const matchedTextLength = match[0].length;
+            const matchStartFrom = match.index;
+            
             const span = iframeDoc.createElement('span');
             const id = Math.random().toString();
             span.className = 'highlight';
             span.id = id;
             span.style.backgroundColor = 'yellow';
+            span.style.cursor = 'pointer';
             span.setAttribute('data-custom', JSON.stringify({ id, text: match[0] }));
             span.onclick = (e : any) => {
               console.log('Clicked on', e.target.getAttribute("data-custom"))
@@ -70,14 +74,15 @@ function App() {
             //insert that on the text node
             try {
               const range = iframeDoc.createRange();
-              range.setStart(textNode, match.index);
-              range.setEnd(textNode, match.index + match[0].length);
+              range.setStart(textNode, matchStartFrom);
+              range.setEnd(textNode, matchStartFrom + matchedTextLength);
               range.surroundContents(span);
               count++;
             }
             catch (error) {
-              // console.log(error);
+              console.log(error)
             }
+
           }
         }
       });
