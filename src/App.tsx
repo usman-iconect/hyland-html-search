@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo } from 'react';
 import './App.css';
+import Mark from 'mark.js';
 
 function App() {
 
@@ -40,59 +41,30 @@ function App() {
       }
     });
 
-    //hyland puts everything in a div
-    const elements = iframeDoc.getElementsByTagName('div');
-
     console.log("Starting Search ", new Date().toLocaleTimeString())
-    let count = 0;
 
-    for (let i = 0; i < elements.length; i++) {
-      const divElement = elements[i];
-      const textNodes = getTextNodes(divElement);
-      // eslint-disable-next-line no-loop-func
-      textNodes.forEach((textNode) => {
-        const text = textNode.nodeValue || '';
-        const re = new RegExp(searchTerm, 'gi');
-        let match;
-        while ((match = re.exec(text)) !== null) {
-          if (match.index > 0) {
+    //hyland puts everything in a div
+    const elements = iframeDoc.getElementsByTagName('html');
 
-            const matchedTextLength = match[0].length;
-            const matchStartFrom = match.index;
-            
-            const span = iframeDoc.createElement('span');
-            const id = Math.random().toString();
-            span.className = 'highlight';
-            span.id = id;
-            span.style.backgroundColor = 'yellow';
-            span.style.cursor = 'pointer';
-            span.setAttribute('data-custom', JSON.stringify({ id, text: match[0] }));
-            span.onclick = (e : any) => {
-              console.log('Clicked on', e.target.getAttribute("data-custom"))
-            }
+    const instance = new Mark(elements[0]);
+    instance.unmark();
+    instance.mark(searchTerm, {
+      className: `custom-highlight :::${JSON.stringify({id: Math.random().toString(), text: "some data"})}`,
+    });
 
-            //insert that on the text node
-            try {
-              const range = iframeDoc.createRange();
-              range.setStart(textNode, matchStartFrom);
-              range.setEnd(textNode, matchStartFrom + matchedTextLength);
-              range.surroundContents(span);
-              count++;
-            }
-            catch (error) {
-              console.log(error)
-            }
+    setTimeout(() => {
+      const highlights = elements[0].getElementsByClassName('custom-highlight')
+      for (let i = 0; i < highlights.length; i++) {
+        const highlight = highlights[i];
+        highlight.addEventListener('click', (e: any) => {
+          console.log("clicked", JSON.parse(e.target.className.split(':::')[1]))
+        })
+      }
+      console.log("Ending Search ", new Date().toLocaleTimeString())
+      console.log("Highlighted ", highlights.length)
+    }, 0)
 
-          }
-        }
-      });
-    }
-
-    console.log("Ending Search ", new Date().toLocaleTimeString())
-    console.log("Highlighted ", count)
   }
-
-
 
   return (
     <div className="App">
@@ -108,19 +80,5 @@ function App() {
     </div>
   );
 }
-
-
-const getTextNodes = (element: Node): Text[] => {
-  const textNodes: Text[] = [];
-  const treeWalker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
-
-  let currentNode = treeWalker.nextNode();
-  while (currentNode) {
-    textNodes.push(currentNode as Text);
-    currentNode = treeWalker.nextNode();
-  }
-
-  return textNodes;
-};
 
 export default App;
