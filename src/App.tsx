@@ -30,6 +30,12 @@ function App() {
       return;
     };
 
+    //on click handler
+    const debouncedHandleClick = debounce(onHighlightClicked, 10);
+    function onHighlightClicked(e: any){
+      console.log('Clicked on', e.target.getAttribute("data-custom"));
+    }
+
     // Remove existing highlights
     const existingHighlights = iframeDoc.querySelectorAll('.highlight');
     existingHighlights.forEach((highlight) => {
@@ -42,8 +48,9 @@ function App() {
 
     //hyland puts everything in a div
     const elements = iframeDoc.getElementsByTagName('div');
+
     console.log("Starting Search ", new Date().toLocaleTimeString())
-    
+
     for (let i = 0; i < elements.length; i++) {
       const divElement = elements[i];
       const textNodes = getTextNodes(divElement);
@@ -53,8 +60,12 @@ function App() {
         let match;
         while ((match = re.exec(text)) !== null) {
           const span = iframeDoc.createElement('span');
+          const id = Math.random().toString();
           span.className = 'highlight';
+          span.id = id;
           span.style.backgroundColor = 'yellow';
+          span.setAttribute('data-custom', JSON.stringify({ id, text: match[0] }));
+          span.onclick = debouncedHandleClick
           const range = iframeDoc.createRange();
           range.setStart(textNode, match.index);
           range.setEnd(textNode, match.index + match[0].length);
@@ -62,7 +73,7 @@ function App() {
         }
       });
     }
-    
+
     console.log("Ending Search ", new Date().toLocaleTimeString())
   }
 
@@ -96,5 +107,17 @@ const getTextNodes = (element: Node): Text[] => {
 
   return textNodes;
 };
+
+function debounce<T extends (...args: any[]) => any>(func: T, delay: number) {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  return function(this: ThisParameterType<T>, ...args: Parameters<T>) {
+      const context = this;
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+          func.apply(context, args);
+      }, delay);
+  };
+}
+
 
 export default App;
