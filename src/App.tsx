@@ -45,6 +45,31 @@ function App() {
 
     //hyland puts everything in a div
     const elements = iframeDoc.getElementsByTagName('html');
+    const htmlDoc = elements[0];
+    const style = document.createElement('style');
+    style.innerHTML = `
+      /* Define hover effect for highlight spans */
+      .custom-highlight {
+        background-color: yellow;
+        cursor: pointer;
+        position: relative;
+      }
+
+      /* Define hover effect */
+      .custom-highlight:hover::after {
+        content: "Additional text to show on hover";
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background-color: rgba(0, 0, 0, 1);
+        color: white;
+        padding: 5px;
+        border-radius: 3px;
+        font-size: 14px;
+        z-index: 99999999999999999999999999999999;
+      }
+    `;
+    htmlDoc.appendChild(style);
 
     const instance = new Mark(elements[0]);
     instance.unmark();
